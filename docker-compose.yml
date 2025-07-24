@@ -10,7 +10,6 @@ services:
     image: felddy/foundryvtt:${FOUNDRY_VERSION}
     volumes:
       - ${DATA_PATH}/Data/${SUBDOMAIN}:/data/Data
-      - ${DATA_PATH}/Data/shared:/data/Data/shared
       - ${DATA_PATH}/Config/${SUBDOMAIN}:/data/Config
       - ${DATA_PATH}/Logs/${SUBDOMAIN}:/data/Logs
     environment:
