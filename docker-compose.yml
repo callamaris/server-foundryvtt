@@ -4,29 +4,110 @@ networks:
     external: true
     name: server-web
 
+volumes:
+  filebrowser_database:
+  filebrowser_config:
+  foundry-test-data:
+  foundry-daddy-data:
+  foundry-alaric-data:
+  shared:
+
 services:
 
-  foundry:
-    image: felddy/foundryvtt:${FOUNDRY_VERSION}
+  filebrowser:
+    image: filebrowser/filebrowser:v2.40.1-s6
+    environment:
+      - PUID=421
+      - PGID=421
     volumes:
-      - ${DATA_PATH}/Data/${SUBDOMAIN}:/data/Data
-      - ${DATA_PATH}/Config/${SUBDOMAIN}:/data/Config
-      - ${DATA_PATH}/Logs/${SUBDOMAIN}:/data/Logs
+      - "filebrowser_database:/database"
+      - "filebrowser_config:/config"
+      - "foundry-test-data:/srv/foundry-test"
+      - "foundry-daddy-data:/srv/foundry-daddy"
+      - "foundry-alaric-data:/srv/foundry-alaric"
+      - "shared:/srv/foundry-test/Data/shared"
+      - "shared:/srv/foundry-daddy/Data/shared"
+      - "shared:/srv/foundry-alaric/Data/shared"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.${HOST_NAME}`)"
+      - "traefik.http.routers.filebrowser.entrypoints=websecure"
+      - "traefik.http.routers.filebrowser.tls.certresolver=myresolver"
+      - "traefik.http.routers.filebrowser.middlewares=authentik@docker"
+      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
+      - "traefik.docker.network=server-web"
+    restart: unless-stopped
+    networks:
+      - web
+
+  foundry-test:
+    image: felddy/foundryvtt:12.343.0
+    volumes:
+      - foundry-test-data:/data
+      - shared:/data/Data/shared
     environment:
       - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
       - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
-      - FOUNDRY_HOSTNAME=${SUBDOMAIN}.${HOST_NAME}
+      - FOUNDRY_HOSTNAME=foundry-test.${HOST_NAME}
       - FOUNDRY_TELEMETRY=false
       - FOUNDRY_PROXY_SSL=true
       - FOUNDRY_PROXY_PORT=443
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${SUBDOMAIN}.rule=Host(`${SUBDOMAIN}.${HOST_NAME}`)"
-      - "traefik.http.routers.${SUBDOMAIN}.entrypoints=websecure"
-      - "traefik.http.routers.${SUBDOMAIN}.tls.certresolver=myresolver"
-      - "traefik.http.routers.${SUBDOMAIN}.middlewares=authentik@docker"
-      - "traefik.http.services.${SUBDOMAIN}.loadbalancer.server.port=30000"
+      - "traefik.http.routers.foundry-test.rule=Host(`foundry-test.${HOST_NAME}`)"
+      - "traefik.http.routers.foundry-test.entrypoints=websecure"
+      - "traefik.http.routers.foundry-test.tls.certresolver=myresolver"
+      - "traefik.http.routers.foundry-test.middlewares=authentik@docker"
+      - "traefik.http.services.foundry-test.loadbalancer.server.port=30000"
+      - "traefik.docker.network=server-web"
+    networks:
+      - web
+
+  foundry-daddy:
+    image: felddy/foundryvtt:12.343.0
+    volumes:
+      - foundry-daddy-data:/data
+      - shared:/data/Data/shared
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - FOUNDRY_HOSTNAME=foundry-daddy.${HOST_NAME}
+      - FOUNDRY_TELEMETRY=false
+      - FOUNDRY_PROXY_SSL=true
+      - FOUNDRY_PROXY_PORT=443
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.foundry-daddy.rule=Host(`foundry-daddy.${HOST_NAME}`)"
+      - "traefik.http.routers.foundry-daddy.entrypoints=websecure"
+      - "traefik.http.routers.foundry-daddy.tls.certresolver=myresolver"
+      - "traefik.http.routers.foundry-daddy.middlewares=authentik@docker"
+      - "traefik.http.services.foundry-daddy.loadbalancer.server.port=30000"
+      - "traefik.docker.network=server-web"
+    networks:
+      - web
+
+  foundry-alaric:
+    image: felddy/foundryvtt:12.343.0
+    volumes:
+      - foundry-alaric-data:/data
+      - shared:/data/Data/shared
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - FOUNDRY_HOSTNAME=foundry-alaric.${HOST_NAME}
+      - FOUNDRY_TELEMETRY=false
+      - FOUNDRY_PROXY_SSL=true
+      - FOUNDRY_PROXY_PORT=443
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.foundry-alaric.rule=Host(`foundry-alaric.${HOST_NAME}`)"
+      - "traefik.http.routers.foundry-alaric.entrypoints=websecure"
+      - "traefik.http.routers.foundry-alaric.tls.certresolver=myresolver"
+      - "traefik.http.routers.foundry-alaric.middlewares=authentik@docker"
+      - "traefik.http.services.foundry-alaric.loadbalancer.server.port=30000"
       - "traefik.docker.network=server-web"
     networks:
       - web
