@@ -8,6 +8,7 @@ volumes:
   filebrowser_database:
   filebrowser_config:
   foundry-test-data:
+  foundry-staging-data:
   foundry-daddy-data:
   foundry-alaric-data:
   shared:
@@ -61,6 +62,30 @@ services:
       - "traefik.http.routers.foundry-test.tls.certresolver=myresolver"
       - "traefik.http.routers.foundry-test.middlewares=authentik@docker"
       - "traefik.http.services.foundry-test.loadbalancer.server.port=30000"
+      - "traefik.docker.network=server-web"
+    networks:
+      - web
+
+  foundry-staging:
+    image: felddy/foundryvtt:13.346.0
+    volumes:
+      - foundry-staging-data:/data
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - FOUNDRY_HOSTNAME=foundry-staging.${HOST_NAME}
+      - FOUNDRY_TELEMETRY=false
+      - FOUNDRY_PROXY_SSL=true
+      - FOUNDRY_PROXY_PORT=443
+      - FOUNDRY_MINIFY_STATIC_FILES=false
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.foundry-staging.rule=Host(`foundry-staging.${HOST_NAME}`)"
+      - "traefik.http.routers.foundry-staging.entrypoints=websecure"
+      - "traefik.http.routers.foundry-staging.tls.certresolver=myresolver"
+      - "traefik.http.routers.foundry-staging.middlewares=authentik@docker"
+      - "traefik.http.services.foundry-staging.loadbalancer.server.port=30000"
       - "traefik.docker.network=server-web"
     networks:
       - web
